@@ -1,6 +1,6 @@
 <h1>About</h1>
-<p>cmsimde_site</p>
-<h1>Upload_image</h1>
+<p><a href="https://github.com/mdewcm2023/site-scrum-1">https://github.com/mdewcm2023/site-scrum-1</a> </p>
+<p><a href="https://mdewcm2023.github.io/site-scrum-1">https://mdewcm2023.github.io/site-scrum-1</a></p><h1>Upload_image</h1>
 <p>using <a href="https://github.com/nodeca/pica">pica javascript library</a> to resize the image integrated with Brython before sending to Flask</p>
 <pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, window, ajax
  
@@ -186,4 +186,155 @@ def upload():
 
 if __name__ == "__main__":
     app.run()</pre>
+<hr/>
+<p>bit by bit upload with Brython</p>
+<p>IT is possible to upload an image file in chunks using Brython and pica. Use the File.slice method to split the file into smaller chunks and send each chunk to the server separately. Here is an example of how to do this:</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, ajax
+from javascript import JSObject
+
+CHUNK_SIZE = 1024 * 1024  # 1MB
+
+def on_complete(req):
+    if req.status == 200 or req.status == 0:
+        print("Chunk uploaded successfully")
+    else:
+        print("Error uploading chunk")
+
+def upload_file(evt):
+    file = document["file-upload"].files[0]
+    # Use pica.js to resize the image here
+    # ...
+    start = 0
+    end = CHUNK_SIZE
+    while start &lt; file.size:
+        chunk = file.slice(start, end)
+        req = ajax.ajax()
+        req.bind("complete", on_complete)
+        req.open("POST", "/upload", True)
+        req.set_header("content-type", "application/octet-stream")
+        req.set_header("content-disposition", f"attachment; filename={file.name}")
+        req.set_header("chunk-number", str(start // CHUNK_SIZE))
+        req.set_header("chunk-size", str(CHUNK_SIZE))
+        req.set_header("total-size", str(file.size))
+        req.send(JSObject(chunk))
+        start = end
+        end += CHUNK_SIZE
+
+document["upload-btn"].bind("click", upload_file)</pre>
+<p>In this example, the File.slice method to split the resized image file into chunks of size CHUNK_SIZE. Each chunk send to the server separately using an XMLHttpRequest object.<br/><br/>Several custom headers are set on the request to provide the server with information about the chunk being uploaded. The content-disposition header specifies the filename of the uploaded file. The chunk-number header specifies the index of the current chunk. The chunk-size header specifies the size of each chunk. And the total-size header specifies the total size of the uploaded file.<br/><br/>On the server-side, we need to implement logic to handle the incoming chunks and reassemble them into a complete file. We can use the custom headers sent with each request to determine which chunk is being uploaded and how to reassemble the complete file.</p>
+<p>bit by bit Flask side</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, request
+import os
+
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "/path/to/upload/folder"
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    filename = request.headers["content-disposition"].split("filename=")[1]
+    chunk_number = int(request.headers["chunk-number"])
+    chunk_size = int(request.headers["chunk-size"])
+    total_size = int(request.headers["total-size"])
+    file_data = request.data
+
+    with open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "ab") as f:
+        f.seek(chunk_number * chunk_size)
+        f.write(file_data)
+
+    return "Chunk uploaded successfully!"
+
+if __name__ == "__main__":
+    app.run()</pre>
+<p>In this example, we use Flask’s request object to access the uploaded chunk and the custom headers sent with the request. We use the content-disposition header to determine the filename of the uploaded file. We use the chunk-number, chunk-size, and total-size headers to determine the index, size, and total size of the uploaded chunks.<br/><br/>We open the file in append mode ("ab") and use the seek method to move the file pointer to the position where the current chunk should be written. Then we write the chunk data to the file using the write method.<br/><br/>This is just a simple example to give you an idea of how you might handle chunked file uploads on the Flask side. You’ll need to add additional logic to handle errors, validate the uploaded chunks, and reassemble the complete file.</p>
+<p>The comple codes:</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, request
+import os
+import hashlib
+
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "/path/to/upload/folder"
+app.config["CHUNKS_FOLDER"] = "/path/to/chunks/folder"
+
+def validate_chunk(filename, chunk_number, chunk_size, total_size, file_data):
+    # Check if the chunk size is correct
+    if len(file_data) != chunk_size and (chunk_number + 1) * chunk_size &lt; total_size:
+        return False
+
+    # Check if the file data is corrupted
+    checksum = hashlib.md5(file_data).hexdigest()
+    if checksum != request.headers["checksum"]:
+        return False
+
+    return True
+
+def reassemble_file(filename, total_size):
+    with open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "wb") as f:
+        for i in range((total_size + CHUNK_SIZE - 1) // CHUNK_SIZE):
+            chunk_filename = f"{filename}.part{i}"
+            with open(os.path.join(app.config["CHUNKS_FOLDER"], chunk_filename), "rb") as cf:
+                f.write(cf.read())
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    filename = request.headers["content-disposition"].split("filename=")[1]
+    chunk_number = int(request.headers["chunk-number"])
+    chunk_size = int(request.headers["chunk-size"])
+    total_size = int(request.headers["total-size"])
+    file_data = request.data
+
+    if not validate_chunk(filename, chunk_number, chunk_size, total_size, file_data):
+        return "Invalid chunk", 400
+
+    chunk_filename = f"{filename}.part{chunk_number}"
+    with open(os.path.join(app.config["CHUNKS_FOLDER"], chunk_filename), "wb") as f:
+        f.write(file_data)
+
+    if (chunk_number + 1) * chunk_size &gt;= total_size:
+        reassemble_file(filename, total_size)
+
+    return "Chunk uploaded successfully!"
+
+if __name__ == "__main__":
+    app.run()</pre>
+<p>In this example, we added some simple validation logic to the validate_chunk function. We check if the size of the uploaded chunk is correct by comparing it to the expected chunk_size. If the size is incorrect and it’s not the last chunk of the file (i.e., (chunk_number + 1) * chunk_size &lt; total_size), we return False to indicate that the chunk is invalid.<br/><br/>We also added a check to see if the file data is corrupted. We use the md5 hash function from Python’s hashlib module to compute a checksum of the uploaded data and compare it to a checksum sent by the client in a custom checksum header. If the checksums don’t match, we return False to indicate that the chunk is invalid.<br/><br/>On the client-side, you’ll need to compute the checksum of each chunk before uploading it and send it to the server in a custom checksum header. Here is an example of how you might do this using Brython:</p>
+<p>The client side:</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, ajax
+from javascript import JSObject
+
+CHUNK_SIZE = 1024 * 1024  # 1MB
+
+def on_complete(req):
+    if req.status == 200 or req.status == 0:
+        print("Chunk uploaded successfully")
+    else:
+        print("Error uploading chunk")
+
+def upload_file(evt):
+    file = document["file-upload"].files[0]
+    # Use pica.js to resize the image here
+    # ...
+    start = 0
+    end = CHUNK_SIZE
+    while start &lt; file.size:
+        chunk = file.slice(start, end)
+        reader = window.FileReader.new()
+        reader.readAsArrayBuffer(chunk)
+        reader.bind("loadend", lambda evt: send_chunk(chunk))
+        start = end
+        end += CHUNK_SIZE
+
+def send_chunk(chunk):
+    checksum = hashlib.md5(chunk).hexdigest()
+    req = ajax.ajax()
+    req.bind("complete", on_complete)
+    req.open("POST", "/upload", True)
+    req.set_header("content-type", "application/octet-stream")
+    req.set_header("content-disposition", f"attachment; filename={file.name}")
+    req.set_header("chunk-number", str(start // CHUNK_SIZE))
+    req.set_header("chunk-size", str(CHUNK_SIZE))
+    req.set_header("total-size", str(file.size))
+    req.set_header("checksum", checksum)
+    req.send(JSObject(chunk))
+
+document["upload-btn"].bind("click", upload_file</pre>
 <p></p>
