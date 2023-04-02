@@ -1,2 +1,189 @@
 <h1>About</h1>
-<p>cmsimde_site</p>
+<p><a href="https://github.com/mdewcm2023/site-scrum-1">https://github.com/mdewcm2023/site-scrum-1</a> </p>
+<p><a href="https://mdewcm2023.github.io/site-scrum-1">https://mdewcm2023.github.io/site-scrum-1</a></p><h1>Upload_image</h1>
+<p>using <a href="https://github.com/nodeca/pica">pica javascript library</a> to resize the image integrated with Brython before sending to Flask</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, window, ajax
+ 
+def on_complete(req):
+    if req.status == 200 or req.status == 0:
+        print("File uploaded successfully")
+    else:
+        print("Error uploading file")
+ 
+def upload_file(file):
+    req = ajax.ajax()
+    req.bind("complete", on_complete)
+    req.open("POST", "/upload", True)
+    req.set_header("Content-Type", "application/octet-stream")
+    req.send(file)
+ 
+def resize_image(file):
+    pica = window.pica
+    img = document.createElement("img")
+    img.src = window.URL.createObjectURL(file)
+    canvas = document.createElement("canvas")
+    max_size = 800
+    if img.width &gt; max_size or img.height &gt; max_size:
+        if img.width &gt; img.height:
+            canvas.width = max_size
+            canvas.height = max_size * img.height / img.width
+        else:
+            canvas.height = max_size
+            canvas.width = max_size * img.width / img.height
+    else:
+        canvas.width = img.width
+        canvas.height = img.height
+ 
+    def on_resize(result):
+        resized_image_data = result.toDataURL("image/jpeg").split(",")[1]
+        upload_file(resized_image_data)
+ 
+    pica.resize(img, canvas).then(on_resize)
+ 
+def handle_files(event):
+    file = event.target.files[0]
+    resize_image(file)
+ 
+input = document.createElement("input")
+input.type = "file"
+input.accept = "image/*"
+input.capture = "camera"
+input.bind("change", handle_files)
+document &lt;= input</pre>
+<h1>Brython_Flask</h1>
+<p>Flask form</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, render_template, request
+import json
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    data = json.loads(request.form["data"])
+    filename = data["filename"]
+    image_data = data["data"]
+    # Save the resized image to the server here
+    # ...
+    return "File uploaded successfully!"
+
+if __name__ == "__main__":
+    app.run()</pre>
+<p>index.html</p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script type="text/javascript" src="/static/brython.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="/static/brython_stdlib.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body onload="brython()"&gt;
+    &lt;input type="file" id="file-upload" accept="image/*" capture="camera"&gt;
+    &lt;button id="upload-btn"&gt;Upload&lt;/button&gt;
+    &lt;script type="text/python" src="/static/upload.py"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+<p>Brython side</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, ajax
+import json
+
+def on_complete(req):
+    if req.status == 200 or req.status == 0:
+        alert("File uploaded successfully!")
+    else:
+        alert("Error uploading file")
+
+def upload_file(evt):
+    file = document["file-upload"].files[0]
+    # Use pica.js to resize the image here
+    # ...
+    data = {
+        "filename": file.name,
+        "data": resized_image_data
+    }
+    req = ajax.ajax()
+    req.bind("complete", on_complete)
+    req.open("POST", "/upload", True)
+    req.set_header("content-type", "application/x-www-form-urlencoded")
+    req.send({"data": json.dumps(data)})
+
+document["upload-btn"].bind("click", upload_file)</pre>
+<p>Complete Brython side</p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script type="text/javascript" src="/static/brython.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="/static/brython_stdlib.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="/static/pica.min.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body onload="brython()"&gt;
+    &lt;input type="file" id="file-upload" accept="image/*"&gt;
+    &lt;button id="upload-btn"&gt;Upload&lt;/button&gt;
+    &lt;img id="preview"&gt;
+    &lt;script type="text/python" src="/static/upload.py"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+<p>Brython side</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import document, window, ajax
+from javascript import JSConstructor
+import json
+
+pica = JSConstructor(window.pica)
+
+def on_complete(req):
+    if req.status == 200 or req.status == 0:
+        alert("File uploaded successfully!")
+    else:
+        alert("Error uploading file")
+
+def resize_image(file):
+    # Create a canvas element to draw the image on
+    canvas = document.createElement("canvas")
+    canvas.width = 300
+    canvas.height = 300
+    ctx = canvas.getContext("2d")
+
+    # Create an image element to hold the uploaded file
+    img = document.createElement("img")
+
+    def on_image_load(evt):
+        # Draw the uploaded image onto the canvas
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+        # Use pica to resize the image
+        pica.resize(img, canvas).then(lambda result: pica.toBlob(result).then(send_data))
+
+    img.bind("load", on_image_load)
+    img.src = window.URL.createObjectURL(file)
+
+def send_data(blob):
+    # Convert the blob to a data URL and set it as the src of the preview image
+    reader = window.FileReader.new()
+    reader.readAsDataURL(blob)
+    reader.bind("loadend", lambda evt: (document["preview"].src = reader.result))
+
+def upload_file(evt):
+    file = document["file-upload"].files[0]
+    resize_image(file)
+
+document["upload-btn"].bind("click", upload_file)</pre>
+<p>Flask side to save uploaded file</p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, request
+import os
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "/path/to/upload/folder"
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    file = request.files["file"]
+    filename = secure_filename(file.filename)
+    file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    return "File uploaded successfully!"
+
+if __name__ == "__main__":
+    app.run()</pre>
+<p></p>
