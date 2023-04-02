@@ -477,6 +477,19 @@ def send_file(file):
         end += CHUNK_SIZE
 
 document["upload-btn"].bind("click", lambda evt: resize_image(document["file-upload"].files[0]))</pre>
+<p>What if user use the mobile phone camera to upload image file:</p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script type="text/javascript" src="./../cmsimde/static/brython.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="./../cmsimde/static/pica.min.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body onload="brython()"&gt;
+    &lt;input type="file" id="file-upload" accept="image/*" capture="camera"&gt;
+    &lt;button id="upload-btn"&gt;Upload&lt;/button&gt;
+    &lt;script type="text/python" src="./../cmsimde/static/upload.py"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
 <p></p><br />Upload_image << <a href='Upload_image.html'>Previous</a> </div>
         
     <!-- footer -->
