@@ -50,7 +50,10 @@ input.accept = "image/*"
 input.capture = "camera"
 input.bind("change", handle_files)
 document &lt;= input</pre>
-<h1>Brython_Flask</h1>
+<h1>pica</h1>
+<p><a href="https://nicobadia-com.translate.goog/?_x_tr_sch=http&amp;_x_tr_sl=fr&amp;_x_tr_tl=en&amp;_x_tr_hl=fr">Blog (nicobadia-com.translate.goog)</a></p>
+<p></p>
+<script src="/downloads/pica.min.js"></script><h1>Brython_Flask</h1>
 <p>Flask form</p>
 <pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from flask import Flask, render_template, request
 import json
@@ -386,4 +389,17 @@ def send_file(file):
         end += CHUNK_SIZE
 
 document["upload-btn"].bind("click", lambda evt: resize_image(document["file-upload"].files[0]))</pre>
+<p>What if user use the mobile phone camera to upload image file:</p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script type="text/javascript" src="/static/brython.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="/static/pica.min.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body onload="brython()"&gt;
+    &lt;input type="file" id="file-upload" accept="image/*" capture="camera"&gt;
+    &lt;button id="upload-btn"&gt;Upload&lt;/button&gt;
+    &lt;script type="text/python" src="/static/upload.py"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
 <p></p>

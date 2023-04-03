@@ -1521,6 +1521,7 @@ def imageuploadform(edit):
                  directory + "</nav><section><h1>image files upload</h1>" + '''
 <script src="/static/jquery.js" type="text/javascript"></script>
 <script src="/static/axuploader.js" type="text/javascript"></script>
+<script src="/static/pica.js" type="text/javascript"></script>
 <script>
 $(document).ready(function(){
 $('.prova').axuploader({url:'imageaxupload', allowExt:['jpg','png','gif'],
@@ -2331,6 +2332,7 @@ def send_file(path):
 
 
 # setup static directory
+#@app.route('/images/<path:path>')
 #@app.route('/images/<path:path>')
 @app.route('/images/<path:path>')
 def send_images(path):

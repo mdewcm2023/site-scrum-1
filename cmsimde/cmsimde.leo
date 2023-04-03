@@ -116,6 +116,9 @@
 <v t="leo.20220911145111.1"><vh>@edit nocache.py</vh></v>
 <v t="leo.20220911145241.1"><vh>@edit .gitignore</vh></v>
 </v>
+<v t="leo.20230403204231.1"><vh>@path static</vh>
+<v t="leo.20230403204342.1"><vh>@auto axuploader.js</vh></v>
+</v>
 </vnodes>
 <tnodes>
 <t tx="leo.20190515144024.1"></t>
@@ -718,7 +721,7 @@ def fileuploadform(edit):
 &lt;script src="/static/axuploader.js" type="text/javascript"&gt;&lt;/script&gt;
 &lt;script&gt;
 $(document).ready(function(){
-$('.prova').axuploader({url:'fileaxupload', allowExt:['jpg','png','gif','7z','pdf','zip','flv','stl','swf'],
+$('.prova').axuploader({url:'fileaxupload', allowExt:['jpg','png','gif','7z','pdf','zip','ttt','stl','txt','html'],
 finish:function(x,files)
     {
         alert('All files have been uploaded: '+files);
@@ -835,7 +838,8 @@ def generate_pages():
         return set_css() + "&lt;div class='container'&gt;&lt;nav&gt;" + \
                      directory + "&lt;/nav&gt;&lt;section&gt;&lt;h1&gt;Generate Pages&lt;/h1&gt;" + \
                      "已經將網站轉為靜態網頁!" + \
-                     "&lt;/section&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;"</t>
+                     "&lt;/section&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;"
+</t>
 <t tx="leo.20190515144237.24"># seperate page need heading and edit variables, if edit=1, system will enter edit mode
 # single page edit will use ssavePage to save content, it means seperate save page
 @app.route('/get_page')
@@ -1279,6 +1283,7 @@ def imageuploadform(edit):
                  directory + "&lt;/nav&gt;&lt;section&gt;&lt;h1&gt;image files upload&lt;/h1&gt;" + '''
 &lt;script src="/static/jquery.js" type="text/javascript"&gt;&lt;/script&gt;
 &lt;script src="/static/axuploader.js" type="text/javascript"&gt;&lt;/script&gt;
+&lt;script src="/static/pica.js" type="text/javascript"&gt;&lt;/script&gt;
 &lt;script&gt;
 $(document).ready(function(){
 $('.prova').axuploader({url:'imageaxupload', allowExt:['jpg','png','gif'],
@@ -1936,6 +1941,7 @@ def send_file(path):
 
 
 # setup static directory
+#@app.route('/images/&lt;path:path&gt;')
 #@app.route('/images/&lt;path:path&gt;')
 </t>
 <t tx="leo.20190515144238.15">@app.route('/images/&lt;path:path&gt;')
@@ -3460,7 +3466,8 @@ http_server.serve_forever()</t>
         return url
     else:
         url = url.replace("http://", "https://", 1)
-        return url</t>
+        return url
+</t>
 <t tx="leo.20221017090913.1">@app.route('/acpform')
 def acpform():
     
@@ -3479,7 +3486,8 @@ def acpform():
                  directory + "&lt;/nav&gt;&lt;section&gt;&lt;h1&gt;Acp From&lt;/h1&gt;&lt;form method='post' action='doAcp'&gt; \
                 Commit Messages:&lt;textarea name='commit' rows='1' cols='80'&gt;&lt;/textarea&gt; \
     &lt;input type='submit' value='acp'&gt;&lt;/form&gt; \
-    &lt;/section&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;"</t>
+    &lt;/section&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;"
+</t>
 <t tx="leo.20221017090933.1">@app.route('/doAcp', methods=['POST'])
 def doAcp():
 
@@ -3506,6 +3514,7 @@ def doAcp():
 
 </t>
 <t tx="leo.20221017090940.1">add acpForm and doAcp</t>
+<t tx="leo.20230403204231.1"></t>
 <t tx="yen.20200710111924.1">def checkMath():
 
     """Use LaTeX Equation rendering
